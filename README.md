@@ -275,20 +275,6 @@ regions, not only the ones routed to it.
   reproduces its stored predictions; on CPU, rounding differences change a small fraction of
   predictions, and AUC can move in the fourth decimal.
 
-## Acknowledgements
-
-- **Features**: UNI2-h features by the [Mahmood Lab](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features);
-  GigaPath features ([CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature))
-  and the curated PANDA labels by Tang et al. ([E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX)).
-- **Encoders**: [UNI2-h](https://huggingface.co/MahmoodLab/UNI2-h) (Chen et al., Nat. Med. 2024)
-  and [Prov-GigaPath](https://huggingface.co/prov-gigapath/prov-gigapath) (Xu et al., Nature 2024).
-- **Data**: [TCGA](https://portal.gdc.cancer.gov/), [CPTAC](https://www.cancerimagingarchive.net/),
-  [PANDA](https://www.kaggle.com/competitions/prostate-cancer-grade-assessment) and
-  [WSSS4LUAD](https://wsss4luad.grand-challenge.org/).
-- **Building blocks**: GATv2 ([Brody et al., ICLR 2022](https://arxiv.org/abs/2105.14491)),
-  Sinkhorn optimal transport ([Cuturi, NeurIPS 2013](https://arxiv.org/abs/1306.0895)) and
-  gated attention pooling ([Ilse et al., ICML 2018](https://proceedings.mlr.press/v80/ilse18a.html)).
-
 ## Citation
 
 ```bibtex

@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+title: "ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts Whole-Slide Image Classification"
+type: software
+authors:
+  - family-names: Tian
+    given-names: Xin
+    affiliation: "Centre for Human Genetics, University of Oxford"
+  - family-names: Lu
+    given-names: Jiuliu
+    affiliation: "Beckman Coulter Diagnostics"
+  - family-names: Tsalik
+    given-names: Ephraim
+    affiliation: "Danaher Corporation"
+  - family-names: Wanders
+    given-names: Bart
+    affiliation: "Beckman Coulter Diagnostics"
+  - family-names: Knoth
+    given-names: Colleen
+    affiliation: "Danaher Corporation"
+  - family-names: Knight
+    given-names: Julian
+    affiliation: "Centre for Human Genetics, University of Oxford"
+repository-code: "https://github.com/xintian-99/ROAM"
+url: "https://arxiv.org/abs/2604.07298"
+identifiers:
+  - type: url
+    value: "https://arxiv.org/abs/2604.07298"
+    description: "arXiv preprint"
+preferred-citation:
+  type: conference-paper
+  title: "Region-Graph Optimal Transport Routing for Mixture-of-Experts Whole-Slide Image Classification"
+  authors:
+    - family-names: Tian
+      given-names: Xin
+    - family-names: Lu
+      given-names: Jiuliu
+    - family-names: Tsalik
+      given-names: Ephraim
+    - family-names: Wanders
+      given-names: Bart
+    - family-names: Knoth
+      given-names: Colleen
+    - family-names: Knight
+      given-names: Julian
+  collection-title: "Proceedings of the IEEE International Conference on Bioinformatics and Biomedicine (BIBM)"
+  year: 2026
+  url: "https://arxiv.org/abs/2604.07298"

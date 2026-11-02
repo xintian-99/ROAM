@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 # 5-fold cross-validation of ROAM on one task/encoder (folds run sequentially).
 #
 #   bash scripts/run_cv.sh <task> <encoder> [extra src.train args ...]

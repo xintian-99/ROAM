@@ -1,58 +1,72 @@
-# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts Whole-Slide Image Classification
+# 🧭 ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts Whole-Slide Image Classification
 
-Code for the IEEE BIBM 2026 paper
+**IEEE BIBM 2026**
 
-> Xin Tian<sup>1</sup>, Jiuliu Lu<sup>2</sup>, Ephraim Tsalik<sup>3</sup>, Bart Wanders<sup>2</sup>, Colleen Knoth<sup>3</sup>, Julian Knight<sup>1</sup>.
-> **Region-Graph Optimal Transport Routing for Mixture-of-Experts Whole-Slide Image Classification.**
-> IEEE International Conference on Bioinformatics and Biomedicine (BIBM), 2026.
->
-> <sup>1</sup>Centre for Human Genetics, University of Oxford, Oxford, UK;
-> <sup>2</sup>Beckman Coulter Diagnostics, Brea, CA, USA;
-> <sup>3</sup>Danaher Corporation, Washington, DC, USA
+**Authors**: Xin Tian<sup>1</sup>, Jiuliu Lu<sup>2</sup>, Ephraim Tsalik<sup>3</sup>, Bart Wanders<sup>2</sup>, Colleen Knoth<sup>3</sup>, Julian Knight<sup>1</sup>
 
-**Paper:** [arXiv:2604.07298](https://arxiv.org/abs/2604.07298) · **Project page:** [`index.html`](index.html)
+<sup>1</sup> Centre for Human Genetics, University of Oxford, Oxford, UK<br>
+<sup>2</sup> Beckman Coulter Diagnostics, Brea, CA, USA<br>
+<sup>3</sup> Danaher Corporation, Washington, DC, USA
 
-ROAM (Region-graph OptimAl-transport Mixture-of-experts) is a multiple-instance-learning (MIL)
-aggregator for whole-slide images (WSIs). It works on frozen patch embeddings and their slide
-coordinates:
+[![arXiv](https://img.shields.io/badge/arXiv-2604.07298-b31b1b.svg)](https://arxiv.org/abs/2604.07298)
+![IEEE BIBM 2026](https://img.shields.io/badge/IEEE%20BIBM-2026-00629B.svg)
 
-1. **Region tokenisation.** Patches are binned on a 16×16 grid (each coordinate axis scaled to
-   [0, 1]), giving up to 256 region tokens (mean feature, size, centroid).
-2. **Routing GNN.** A 2-layer GATv2 on a kNN graph (k = 8) of region centroids produces routing
-   embeddings. These are used only for routing.
-3. **Capacity-constrained OT routing.** Region-to-expert cost is 1 − cos(routing embedding, expert
-   prototype). Region supply is proportional to region size, with a boost for locally distinct
-   regions; each expert has capacity 1/E. Entropic OT is solved by Sinkhorn (T = 20 updates).
-4. **Graph regularisation.** Three times during Sinkhorn, each region's log transport plan is
-   smoothed towards its spatial neighbours (λ_s = 0.1), followed by re-projection.
-5. **Sparse dispatch and expert pooling.** Each region keeps its top-2 experts. Each of the E = 8
-   experts is a gated-attention pooler whose attention is biased by log(dispatch weight).
-6. **Fusion.** Gated attention over the experts, concatenated with an embedding of each expert's
-   dispatched load and entropy, followed by an MLP classifier.
+---
+
+## Overview
+
+ROAM is a multiple instance learning (MIL) model for whole-slide images (WSIs).
+It takes frozen patch features with their coordinates, groups the patches into tissue
+regions, and sends each region to a few experts with optimal transport (OT).
+
+<p align="center">
+  <img src="assets/method.png" width="100%" alt="ROAM pipeline">
+</p>
+
+1. **Region tokens.** Patches are binned on a 16×16 grid, giving up to 256 regions.
+   Each region keeps its mean feature, its size and its centre.
+2. **Routing GNN.** A 2-layer GATv2 runs on a k-nearest-neighbour graph (k = 8) of region
+   centres. Its output is used only to decide the routing.
+3. **OT routing with expert capacity.** The cost of sending a region to an expert is
+   1 − cos(routing embedding, expert prototype). A region's mass grows with its size and is
+   boosted when it differs from its neighbours. Each of the E = 8 experts can take 1/E of
+   the total. Sinkhorn solves the transport in T = 20 steps.
+4. **Graph regularisation.** Three times during Sinkhorn, each region's transport plan is
+   smoothed towards its neighbours (λ<sub>s</sub> = 0.1) and then re-normalised.
+5. **Expert pooling.** Each region keeps its top-2 experts. Each expert is a
+   gated-attention pooler whose attention is biased by log(routing weight).
+6. **Fusion.** Gated attention combines the 8 experts, together with a summary of how much
+   each expert received. An MLP makes the slide prediction.
 
 The model is in [`src/models/roam.py`](src/models/roam.py).
 
-## Repository layout
+## Repository
 
-```
-src/
-  models/roam.py               ROAM
-  data/dataset.py              reads .h5 (UNI2-h) and .pt + coords .h5 (CPathPatchFeature) features
-  train.py                     train ROAM on one fold (+ optional external test set)
-  eval.py                      re-score a trained run
-  utils/metrics.py             AUC / balanced accuracy / F1, QWK
-splits/                        slide lists with labels and 5-fold assignments (paths relative to a feature root)
-scripts/
-  download_features.py         download the pre-extracted features from Hugging Face
-  run_cv.sh                    5-fold cross-validation for one task / encoder
-  run_ablations.sh             ablations (Table II)
-  summarize.py                 mean ± std over folds
-  benchmark_cost.py            parameters, GFLOPs and latency at N = 10,000 patches
-  export_routing.py            per-patch expert routing of selected slides (Fig. 2)
-  interpretability/            WSSS4LUAD tissue analysis of the experts (Sec. IV-B)
-tests/test_models.py           smoke tests (training step, edge cases, ablations, train/eval CLI)
-index.html, assets/            project page
-```
+| Path | What it does |
+|---|---|
+| `src/models/roam.py` | the ROAM model |
+| `src/train.py` | trains one fold and scores it |
+| `src/eval.py` | re-scores a saved checkpoint, no training |
+| `src/data/dataset.py` | reads feature files (`.h5`, or `.pt` + coordinate `.h5`) |
+| `src/utils/metrics.py` | AUC, balanced accuracy, F1, QWK |
+| `splits/` | slide lists: label, patient, fold, feature path |
+| `scripts/` | download, cross-validation, ablations, summary, cost, routing maps, WSSS4LUAD |
+| `tests/` | quick checks that the code runs (random data) |
+| `assets/` | figures |
+
+**How train, eval and tests fit together**
+
+| Step | Command | Input | Output |
+|---|---|---|---|
+| Train one fold | `python -m src.train` | split file + features | `best_model.pt`, `summary.json`, `val_preds.csv` (+ `external_*`) |
+| Train all 5 folds | `bash scripts/run_cv.sh` | same | one folder per fold |
+| Mean ± std over folds | `python -m scripts.summarize` | `summary.json`, `external_metrics.json` | table on screen |
+| Re-score a checkpoint | `python -m src.eval` | `best_model.pt` + `config.json` | `eval_*` files |
+| Check the code | `pytest` | random data | pass / fail |
+
+For fold *k*, `src.train` trains on the other four folds and scores fold *k*.
+For NSCLC it also scores all 2,206 CPTAC slides (the external test set).
+`tests/` only checks the code; it is not a data split.
 
 ## Installation
 
@@ -64,76 +78,81 @@ pip install -r requirements.txt
 pytest -q                                                               # optional, a few minutes on CPU
 ```
 
-Tested with Python 3.10, PyTorch 2.7.1 and CUDA 11.8. ROAM needs no graph library; the GATv2
-layer is written in plain PyTorch.
+Tested with Python 3.10, PyTorch 2.7.1 and CUDA 11.8.
+ROAM needs no graph library: the GATv2 layer is written in plain PyTorch.
 
 ## Data
 
-All experiments use pre-extracted, frozen patch features released by other groups. We did not
-re-extract features from the slides. The table below links the download page of every raw
-dataset and feature set; `scripts/download_features.py` (see **Download**) fetches the features.
-The raw WSIs are only needed to extract features for new cohorts or to visualise routing maps.
+We use public patch features. No features were re-extracted from the slides.
+You only need the raw slides to add new cohorts or to draw routing maps on the tissue.
 
-| Task (paper) | Cohort / label | Slides (patients) | Raw WSIs | UNI2-h features | GigaPath features | Split file(s) |
-|---|---|---|---|---|---|---|
-| NSCLC | TCGA-LUAD (0) vs TCGA-LUSC (1) | 1,043 (946) | GDC [TCGA-LUAD](https://portal.gdc.cancer.gov/projects/TCGA-LUAD), [TCGA-LUSC](https://portal.gdc.cancer.gov/projects/TCGA-LUSC) | [UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features): `TCGA/TCGA-LUAD`, `TCGA/TCGA-LUSC` | [CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature): `nsclc` (1,016 slides) | `uni2h_tcga_nsclc.csv`, `gigapath_tcga_nsclc.csv` |
-| NSCLC external test | CPTAC-LUAD (0) vs CPTAC-LSCC (1) | 2,206 (453) | TCIA [CPTAC-LUAD](https://www.cancerimagingarchive.net/collection/cptac-luad/), [CPTAC-LSCC](https://www.cancerimagingarchive.net/collection/cptac-lscc/) | [UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features): `CPTAC/cptac_luad_part1`, `_part2`, `CPTAC/cptac_lscc` | not provided | `uni2h_cptac_nsclc.csv` |
-| BRCA | TCGA-BRCA, IDC (0) vs other (1) | 1,126 (1,055) | GDC [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA) | [UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features): `TCGA/TCGA-BRCA_IDC`, `TCGA/TCGA-BRCA_OTHERS` | [CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature): `brca` (1,114 slides) | `uni2h_tcga_brca.csv`, `gigapath_tcga_brca.csv` |
-| CRC | TCGA-COAD (0) vs TCGA-READ (1) | 600 (591) | GDC [TCGA-COAD](https://portal.gdc.cancer.gov/projects/TCGA-COAD), [TCGA-READ](https://portal.gdc.cancer.gov/projects/TCGA-READ) | [UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features): `TCGA/TCGA-COAD`, `TCGA/TCGA-READ` | not provided | `uni2h_tcga_crc.csv` |
-| PANDA | ISUP grade 0–5 (prostate biopsies) | 10,202 | [Kaggle PANDA challenge](https://www.kaggle.com/competitions/prostate-cancer-grade-assessment) | [UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features): `PANDA/panda` | [CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature): `panda` (9,055 slides) | `uni2h_panda.csv`, `gigapath_panda.csv` |
-| Interpretability (Sec. IV-B) | WSSS4LUAD tissue masks | 22 regions of interest | [WSSS4LUAD challenge](https://wsss4luad.grand-challenge.org/) | – | – | – |
+**Datasets**
 
-**Feature sources**
+| Task | Labels | Slides (patients) | Raw slides |
+|---|---|---|---|
+| NSCLC | TCGA-LUAD (0) vs TCGA-LUSC (1) | 1,043 (946) | GDC: [TCGA-LUAD](https://portal.gdc.cancer.gov/projects/TCGA-LUAD), [TCGA-LUSC](https://portal.gdc.cancer.gov/projects/TCGA-LUSC) |
+| NSCLC, external test | CPTAC-LUAD (0) vs CPTAC-LSCC (1) | 2,206 (453) | TCIA: [CPTAC-LUAD](https://www.cancerimagingarchive.net/collection/cptac-luad/), [CPTAC-LSCC](https://www.cancerimagingarchive.net/collection/cptac-lscc/) |
+| BRCA | IDC (0) vs other (1) | 1,126 (1,055) | GDC: [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA) |
+| CRC | TCGA-COAD (0) vs TCGA-READ (1) | 600 (591) | GDC: [TCGA-COAD](https://portal.gdc.cancer.gov/projects/TCGA-COAD), [TCGA-READ](https://portal.gdc.cancer.gov/projects/TCGA-READ) |
+| PANDA | ISUP grade 0–5 | 10,202 | Kaggle: [PANDA challenge](https://www.kaggle.com/competitions/prostate-cancer-grade-assessment) |
+| Interpretability | tumour / stroma / normal masks | 22 regions | [WSSS4LUAD challenge](https://wsss4luad.grand-challenge.org/) |
 
-* **UNI2-h**: [MahmoodLab/UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features)
-  (gated: accept the terms on the dataset page, then `huggingface-cli login`). Encoder:
-  [MahmoodLab/UNI2-h](https://huggingface.co/MahmoodLab/UNI2-h). One `.h5` per slide with
-  `features` (1, N, 1536) and `coords` (1, N, 2).
-* **GigaPath**: [Dearcat/CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature)
-  (Tang et al.; code at [E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX)). Encoder:
-  [prov-gigapath](https://huggingface.co/prov-gigapath/prov-gigapath). Features are stored as
-  `<dataset>/gigap/pt_files/<slide>.pt` (N, 1536), with coordinates in `<dataset>/patches/<slide>.h5`.
-  This release covers TCGA-NSCLC, TCGA-BRCA and PANDA. The split files contain only slides that
-  have both a feature file and a coordinate file.
-* **Other cohorts or encoders**: extract features with
-  [TRIDENT](https://github.com/mahmoodlab/TRIDENT) (or [CLAM](https://github.com/mahmoodlab/CLAM))
-  and save one `.h5` per slide with `features` and `coords` datasets, shaped (N, D) or (1, N, D).
-  Then point a split file at them: copy one of ours and replace `feature_path`. Set `--d_in` if
-  D ≠ 1536.
+**Features**
+
+| Task | UNI2-h ([MahmoodLab/UNI2-h-features](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features)) | GigaPath ([Dearcat/CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature)) | Split files |
+|---|---|---|---|
+| NSCLC | `TCGA/TCGA-LUAD`, `TCGA/TCGA-LUSC` | `nsclc` (1,016 slides) | `uni2h_tcga_nsclc.csv`, `gigapath_tcga_nsclc.csv` |
+| NSCLC, external test | `CPTAC/cptac_luad_part1`, `cptac_luad_part2`, `cptac_lscc` | not available | `uni2h_cptac_nsclc.csv` |
+| BRCA | `TCGA/TCGA-BRCA_IDC`, `TCGA/TCGA-BRCA_OTHERS` | `brca` (1,114 slides) | `uni2h_tcga_brca.csv`, `gigapath_tcga_brca.csv` |
+| CRC | `TCGA/TCGA-COAD`, `TCGA/TCGA-READ` | not available | `uni2h_tcga_crc.csv` |
+| PANDA | `PANDA/panda` | `panda` (9,055 slides) | `uni2h_panda.csv`, `gigapath_panda.csv` |
+
+- **UNI2-h** ([encoder](https://huggingface.co/MahmoodLab/UNI2-h)): one `.h5` per slide with
+  `features` (1, N, 1536) and `coords` (1, N, 2). The dataset is gated: accept its terms on
+  Hugging Face, then run `huggingface-cli login`.
+- **GigaPath** ([encoder](https://huggingface.co/prov-gigapath/prov-gigapath)): features in
+  `<dataset>/gigap/pt_files/<slide>.pt` (N, 1536), coordinates in `<dataset>/patches/<slide>.h5`.
+  Released by Tang et al. with [E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX).
+  The GigaPath split files keep only slides that have both files.
+- **Your own cohort or encoder**: extract features with [TRIDENT](https://github.com/mahmoodlab/TRIDENT)
+  or [CLAM](https://github.com/mahmoodlab/CLAM), save one `.h5` per slide with `features` and
+  `coords`, copy one of our split files and change `feature_path`. Set `--d_in` if the feature
+  size is not 1536.
 
 **Download**
 
 ```bash
-# UNI2-h (needs Hugging Face access to the gated dataset)
+# UNI2-h (gated: needs Hugging Face access)
 python scripts/download_features.py --encoder uni2h --tasks nsclc cptac brca crc panda --out /data/UNI2-h-features
 # GigaPath
 python scripts/download_features.py --encoder gigapath --tasks nsclc brca panda --out /data/CPathPatchFeature
 ```
 
-The UNI2-h archives are large: about 71 GB for TCGA-NSCLC, 100 GB for CPTAC, 64 GB for BRCA,
-22 GB for CRC and 32 GB for PANDA. The script extracts each archive to
-`<out>/<TCGA|CPTAC|PANDA>/<archive name>/<slide>.h5`, which is the layout the split files expect.
+UNI2-h sizes: TCGA-NSCLC ≈ 71 GB, CPTAC ≈ 100 GB, BRCA ≈ 64 GB, CRC ≈ 22 GB, PANDA ≈ 32 GB.
+The script unpacks each archive to `<out>/<TCGA|CPTAC|PANDA>/<archive>/<slide>.h5`,
+which is the layout the split files expect.
 
-**Split files** (`splits/*.csv`). Columns: `slide_id, case_id, label, label_str, fold,
-feature_path[, coords_path]`. Paths are relative to the feature root you pass with
-`--feature_root`.
+**Split files** (`splits/*.csv`)
 
-* TCGA folds come from `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=0)`,
-  stratified by label and grouped by patient (`case_id`), so all slides of a patient fall in
-  the same fold.
-* PANDA folds are stratified by ISUP grade (one slide per case).
-* CPTAC is external only (`fold = -1`).
-* PANDA uses the curated 10,202-slide label table from
-  [E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX). The official training set has
-  10,616 slides.
-* The GigaPath split files keep each slide's fold from the UNI2-h split.
+Columns: `slide_id, case_id, label, label_str, fold, feature_path` (+ `coords_path` for GigaPath).
+Paths are relative to the folder you pass with `--feature_root`.
+
+- **TCGA**: `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=0)`, grouped by
+  patient. All slides of a patient are in the same fold, and each fold has a similar label ratio.
+- **PANDA**: `StratifiedKFold(n_splits=5, shuffle=True, random_state=0)` by ISUP grade
+  (one slide per case). We use the curated 10,202-slide label table of
+  [E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX); the official training set has 10,616 slides.
+- **GigaPath**: each slide keeps its fold from the UNI2-h split.
+- **CPTAC**: external test only (`fold = -1`); no patient is shared with TCGA.
+
+Running the scikit-learn call above on a split file reproduces its folds (checked with scikit-learn 1.7).
 
 ## Training and evaluation
 
-Commands are run from the repository root. Point `UNI2H_ROOT` and `GIGAPATH_ROOT` at the feature
-roots.
+Run all commands from the repository root.
+`UNI2H_ROOT` and `GIGAPATH_ROOT` point at the downloaded features.
 
-**One fold of ROAM** (NSCLC, UNI2-h, CPTAC external test):
+**One fold** (NSCLC, UNI2-h, with the CPTAC external test):
 
 ```bash
 python -m src.train \
@@ -141,44 +160,45 @@ python -m src.train \
     --feature_root $UNI2H_ROOT --fold 0 --output_dir outputs/uni2h/nsclc/roam/fold0
 ```
 
-The defaults in `src/train.py` are the paper configuration.
+The defaults in `src/train.py` are the paper settings.
 
-**5-fold cross-validation** for any task and encoder:
+**5-fold cross-validation**
 
 ```bash
 export UNI2H_ROOT=/data/UNI2-h-features GIGAPATH_ROOT=/data/CPathPatchFeature
-bash scripts/run_cv.sh nsclc uni2h                # also scores CPTAC with every fold model
+bash scripts/run_cv.sh nsclc uni2h            # also scores CPTAC with every fold
 bash scripts/run_cv.sh brca uni2h
 bash scripts/run_cv.sh panda gigapath
-bash scripts/run_ablations.sh                     # Table II variants (NSCLC, UNI2-h)
-python -m scripts.summarize --out outputs         # mean ± std over folds, internal + CPTAC
+bash scripts/run_ablations.sh                 # Table II variants (NSCLC, UNI2-h)
+python -m scripts.summarize --out outputs     # mean ± std over folds, internal + CPTAC
 ```
 
 Each fold writes `config.json`, `history.csv`, `best_model.pt`, `summary.json` and
-`val_preds.csv` to `outputs/<encoder>/<task>/roam/fold<k>/`. With an external set it also
-writes `external_metrics.json` and `external_preds.csv`. Folds run one after another; on a
-cluster, submit one job per fold with `FOLDS=<k>`.
+`val_preds.csv` to `outputs/<encoder>/<task>/roam/fold<k>/`, plus `external_metrics.json`
+and `external_preds.csv` when there is an external set.
+Folds run one after another; on a cluster, run one job per fold with `FOLDS=<k>`.
 
-**Re-scoring a trained run.** `src.eval` writes `eval_*` files and does not touch the training
-outputs.
+**Re-score a checkpoint** (writes `eval_*` files and leaves the training outputs untouched):
 
 ```bash
 python -m src.eval --run_dir outputs/uni2h/nsclc/roam/fold0 --feature_root $UNI2H_ROOT
 python -m src.eval --run_dir outputs/uni2h/nsclc/roam/fold0 --feature_root $UNI2H_ROOT --max_patches 0   # full bags
 ```
 
-**Computational cost** (Sec. IV-A; parameters, GFLOPs and latency at N = 10,000 patches):
+**Computational cost** (paper Sec. IV-A)
 
 ```bash
 python -m scripts.benchmark_cost --manifest splits/uni2h_tcga_nsclc.csv --feature_root $UNI2H_ROOT --n 10000
 ```
 
 The paper reports 3.31 M parameters, 16.4 GFLOPs and 8.9 ms per slide for ROAM, measured on
-one NVIDIA A100 40 GB GPU (aggregator only, N = 10,000 patches, latency = mean of 20 forward
-passes at batch size 1). Latency depends on the GPU.
+one NVIDIA A100 40 GB GPU (aggregator only, N = 10,000 patches, mean of 20 forward passes,
+batch size 1). Latency depends on the GPU.
 
-**Interpretability** (Sec. IV-B). Per-patch routing of selected slides, for maps like Fig. 2
-(colour each patch by `expert` at its `x, y`):
+## Interpretability
+
+**Routing maps** (paper Fig. 2). Export the expert of every patch for chosen slides, then
+colour each patch by `expert` at its `x, y`:
 
 ```bash
 python -m scripts.export_routing --run_dir outputs/uni2h/nsclc/roam/fold0 \
@@ -186,9 +206,14 @@ python -m scripts.export_routing --run_dir outputs/uni2h/nsclc/roam/fold0 \
     --slides <slide_id> [<slide_id> ...] --out routing.csv
 ```
 
-Tissue association of the experts on WSSS4LUAD: download the challenge data, embed its annotated
-validation regions with UNI2-h (needs `timm` and access to the gated UNI2-h weights), then score
-each expert's dispatch weight against the tissue masks:
+<p align="center">
+  <img src="assets/expertroutingmap.png" width="85%" alt="ROAM expert routing vs ABMIL and CLAM-SB attention on CPTAC slides">
+  <br><em>Dominant expert per region on two CPTAC slides (top: LUAD, bottom: LUSC), next to ABMIL and CLAM-SB attention.</em>
+</p>
+
+**Tissue types** (paper Fig. 3). Embed the annotated WSSS4LUAD validation regions with UNI2-h
+(needs `timm` and access to the gated UNI2-h weights), then score each expert's routing weight
+against the tissue masks:
 
 ```bash
 python -m scripts.interpretability.extract_wsss4luad_uni2h --wsss_root /data/WSSS4LUAD --out_dir /data/wsss4luad_uni2h
@@ -196,57 +221,73 @@ python -m scripts.interpretability.score_wsss4luad_experts --run_dir outputs/uni
     --feat_dir /data/wsss4luad_uni2h --out wsss4luad_expert_auc.csv
 ```
 
-### ROAM configuration
+<p align="center">
+  <img src="assets/fig_wsss.png" width="100%" alt="Expert routing weights vs tissue masks on WSSS4LUAD">
+  <br><em>H&amp;E, tissue masks and routing weights of selected experts on two WSSS4LUAD fields.</em>
+</p>
 
-| | flag | value |
+## Settings
+
+**ROAM** (defaults in `src/train.py`)
+
+| Setting | Flag | Value |
 |---|---|---|
-| working dim d | `--d_proj` | 512 |
+| hidden size d | `--d_proj` | 512 |
 | region tokens M (grid) | `--n_tokens` | 256 (16×16) |
-| region kNN graph | `--k_neighbors` | 8 |
-| routing GNN | `--gnn_layers / --gnn_heads / --gnn_dropout` | 2 GATv2 layers, 4 heads, 0.1 |
-| experts E, top-k | `--num_experts / --topk` | 8, 2 |
-| OT ε, Sinkhorn updates T | `--ot_eps / --sinkhorn_iters` | 0.1, 20 |
-| graph regularisation λ_s, steps | `--lam_smooth / --smooth_iters` | 0.1, 3 |
-| supply rarity boost | `--lam_rare` | 0.2 |
-| expert heads, expert attention dim | `--expert_heads`, `--d_att` | 2, 64 (= d_att / 4) |
-| routing-profile embedding | `--d_comp` | 64 |
-| optimiser | `--lr / --weight_decay` | AdamW, 5e-4, 1e-4 |
+| region graph neighbours | `--k_neighbors` | 8 |
+| routing GNN | `--gnn_layers`, `--gnn_heads`, `--gnn_dropout` | 2 GATv2 layers, 4 heads, 0.1 |
+| experts E, top-k | `--num_experts`, `--topk` | 8, 2 |
+| OT ε, Sinkhorn steps T | `--ot_eps`, `--sinkhorn_iters` | 0.1, 20 |
+| graph regularisation λ<sub>s</sub>, rounds | `--lam_smooth`, `--smooth_iters` | 0.1, 3 |
+| mass boost for distinct regions | `--lam_rare` | 0.2 |
+| expert heads, expert attention size | `--expert_heads`, `--d_att` | 2, 64 (= d_att / 4) |
+| routing-summary embedding | `--d_comp` | 64 |
+| optimiser | `--lr`, `--weight_decay` | AdamW, 5e-4, 1e-4 |
 
-Ablations (Table II), each changing one setting of the full model:
+**Ablations** (paper Table II; each changes one setting)
 
-| Variant | flag |
+| Variant | Flag |
 |---|---|
-| I. w/o routing GNN (Z = region features; graph regularisation kept) | `--no_routing_gnn` |
-| II. w/o graph regularisation (plain Sinkhorn, 20 updates) | `--smooth_iters 0` |
-| III. softmax routing (no capacity constraint) | `--routing softmax` |
-| IV. w/o OT-guided pooling (no log γ term in expert attention) | `--no_ot_modulation` |
-| V. OT-guided pooling with detached routing weights | `--ot_mod_detach` |
+| I. no routing GNN (graph regularisation kept) | `--no_routing_gnn` |
+| II. no graph regularisation (plain Sinkhorn, 20 steps) | `--smooth_iters 0` |
+| III. softmax routing (no capacity limit) | `--routing softmax` |
+| IV. no OT-guided pooling (no log γ term) | `--no_ot_modulation` |
+| V. OT-guided pooling, routing weights detached | `--ot_mod_detach` |
 
-Softmax routing also removes the graph term (which lives inside Sinkhorn), and its dispatch rows
-sum to 1 rather than to the region supply. Without the log γ term, each expert attends over all
-regions rather than only the regions dispatched to it.
+Softmax routing also drops the graph term, which lives inside Sinkhorn, and each region's
+weights sum to 1 instead of to its mass. Without the log γ term, every expert looks at all
+regions, not only the ones routed to it.
 
-### Protocol details
+**Training protocol**
 
-* **Training.** AdamW; linear warm-up from 0.1 × lr over 5 epochs, then cosine decay over the
-  remaining epochs (stepped once per epoch). Batch size 1 slide, dropout 0.25, gradient clipping
-  at norm 1.0, at most 200 epochs, early stopping with patience 20.
-* **Loss.** Binary tasks use one logit with `BCEWithLogitsLoss`; PANDA uses six-way
-  cross-entropy.
-* **Model selection.** Early stopping and checkpoint selection use the primary metric (AUC, or
-  QWK for PANDA) on the held-out fold. That same fold's score is reported as the internal
-  result. For NSCLC, the selected checkpoint of every fold is then scored on all 2,206 CPTAC
-  slides.
-* **Bag size.** Bags larger than `--max_patches` (default 4,096) are randomly subsampled every
-  epoch during training. Evaluation, both in `src.train` and by default in `src.eval`, keeps the
-  first 4,096 patches in file order. `src.eval --max_patches 0` scores full bags.
-* **Metrics.** Slide-level AUC for binary tasks, quadratic weighted kappa for PANDA. The
-  summaries report mean ± population std over the five folds.
-* **Reproducibility.** Seeds are fixed (`--seed 0`). Some CUDA kernels (scatter-add, index
-  backward) are non-deterministic, so GPU training reruns can differ slightly from run to run.
-  Re-scoring a checkpoint on GPU reproduces its stored predictions; on CPU, floating-point
-  differences change the predictions of a small fraction of slides, and AUC can move in the
-  fourth decimal.
+- **Optimiser**: AdamW. Learning rate warms up linearly from 0.1 × lr over 5 epochs, then
+  follows a cosine decay (updated once per epoch).
+- **Training loop**: one slide per batch, dropout 0.25, gradient clipping at 1.0,
+  at most 200 epochs, early stopping on AUC (QWK for PANDA) with patience 20.
+- **Loss**: binary tasks use one logit with `BCEWithLogitsLoss`; PANDA uses 6-class cross-entropy.
+- **Bag size**: in training, bags with more than 4,096 patches (`--max_patches`) get a new
+  random subset each epoch. In evaluation (`src.train`, and `src.eval` by default), the first
+  4,096 patches in file order are used; `src.eval --max_patches 0` uses all patches.
+- **Metrics**: slide-level AUC for binary tasks, quadratic weighted kappa for PANDA;
+  mean ± population std over the five folds.
+- **Reproducibility**: seeds are fixed (`--seed 0`). Some CUDA operations are
+  non-deterministic, so GPU training reruns can differ slightly. Re-scoring a checkpoint on GPU
+  reproduces its stored predictions; on CPU, rounding differences change a small fraction of
+  predictions, and AUC can move in the fourth decimal.
+
+## Acknowledgements
+
+- **Features**: UNI2-h features by the [Mahmood Lab](https://huggingface.co/datasets/MahmoodLab/UNI2-h-features);
+  GigaPath features ([CPathPatchFeature](https://huggingface.co/datasets/Dearcat/CPathPatchFeature))
+  and the curated PANDA labels by Tang et al. ([E2E-WSI-ABMILX](https://github.com/DearCaat/E2E-WSI-ABMILX)).
+- **Encoders**: [UNI2-h](https://huggingface.co/MahmoodLab/UNI2-h) (Chen et al., Nat. Med. 2024)
+  and [Prov-GigaPath](https://huggingface.co/prov-gigapath/prov-gigapath) (Xu et al., Nature 2024).
+- **Data**: [TCGA](https://portal.gdc.cancer.gov/), [CPTAC](https://www.cancerimagingarchive.net/),
+  [PANDA](https://www.kaggle.com/competitions/prostate-cancer-grade-assessment) and
+  [WSSS4LUAD](https://wsss4luad.grand-challenge.org/).
+- **Building blocks**: GATv2 ([Brody et al., ICLR 2022](https://arxiv.org/abs/2105.14491)),
+  Sinkhorn optimal transport ([Cuturi, NeurIPS 2013](https://arxiv.org/abs/1306.0895)) and
+  gated attention pooling ([Ilse et al., ICML 2018](https://proceedings.mlr.press/v80/ilse18a.html)).
 
 ## Citation
 
@@ -261,8 +302,9 @@ regions rather than only the regions dispatched to it.
 }
 ```
 
-Please also cite the feature and data sources listed above (UNI2-h, GigaPath, CPathPatchFeature,
-TCGA, CPTAC, PANDA).
+GitHub's **Cite this repository** button uses the same entry (`CITATION.cff`).
+If you use the features or data, please also cite UNI2-h, Prov-GigaPath, CPathPatchFeature,
+TCGA, CPTAC and PANDA.
 
 ## Contact
 
@@ -270,23 +312,22 @@ Xin Tian (xin.tian@well.ox.ac.uk), Centre for Human Genetics, University of Oxfo
 
 ## Compared methods
 
-Table I of the paper compares ROAM with the methods below, on the same features and splits and
-with the same training loop (AdamW, lr 2e-4, weight decay 1e-5; MambaMIL with at most 512
-patches per bag).
+Table I of the paper compares ROAM with these methods on the same features, splits and
+training loop (AdamW, lr 2e-4, weight decay 1e-5; MambaMIL with at most 512 patches per bag).
 
 | Method | Paper | Code |
 |---|---|---|
 | MeanPool / MaxPool | – | – |
-| ABMIL | Ilse et al., [Attention-based deep multiple instance learning](https://proceedings.mlr.press/v80/ilse18a.html), ICML 2018 | [AMLab-Amsterdam/AttentionDeepMIL](https://github.com/AMLab-Amsterdam/AttentionDeepMIL) |
-| CLAM-SB / CLAM-MB | Lu et al., [Data-efficient and weakly supervised computational pathology on whole-slide images](https://doi.org/10.1038/s41551-020-00682-w), Nat. Biomed. Eng. 2021 | [mahmoodlab/CLAM](https://github.com/mahmoodlab/CLAM) |
-| DSMIL | Li et al., [Dual-stream multiple instance learning network for whole slide image classification with self-supervised contrastive learning](https://arxiv.org/abs/2011.08939), CVPR 2021 | [binli123/dsmil-wsi](https://github.com/binli123/dsmil-wsi) |
-| DTFD-MIL | Zhang et al., [DTFD-MIL: Double-tier feature distillation multiple instance learning for histopathology whole slide image classification](https://arxiv.org/abs/2203.12081), CVPR 2022 | [hrzhang1123/DTFD-MIL](https://github.com/hrzhang1123/DTFD-MIL) |
-| ACMIL | Zhang et al., [Attention-challenging multiple instance learning for whole slide image classification](https://arxiv.org/abs/2311.07125), ECCV 2024 | [dazhangyu123/ACMIL](https://github.com/dazhangyu123/ACMIL) |
-| TransMIL | Shao et al., [TransMIL: Transformer based correlated multiple instance learning for whole slide image classification](https://arxiv.org/abs/2106.00908), NeurIPS 2021 | [szc19990412/TransMIL](https://github.com/szc19990412/TransMIL) |
-| ILRA | Xiang et al., [Exploring low-rank property in multiple instance learning for whole slide image classification](https://openreview.net/forum?id=01KmhBsEPFO), ICLR 2023 | [jinxixiang/low_rank_wsi](https://github.com/jinxixiang/low_rank_wsi) |
-| RRT-MIL | Tang et al., [Feature re-embedding: Towards foundation model-level performance in computational pathology](https://arxiv.org/abs/2402.17228), CVPR 2024 | [DearCaat/RRT-MIL](https://github.com/DearCaat/RRT-MIL) |
-| MambaMIL | Yang et al., [MambaMIL: Enhancing long sequence modeling with sequence reordering in computational pathology](https://arxiv.org/abs/2403.06800), MICCAI 2024 | [isyangshu/MambaMIL](https://github.com/isyangshu/MambaMIL) |
-| TAD-Graph | Wang et al., [TAD-Graph: Enhancing whole slide image analysis via task-aware subgraph disentanglement](https://doi.org/10.1109/TMI.2025.3545680), IEEE TMI 2025 | [HKU-MedAI/TAD-Graph](https://github.com/HKU-MedAI/TAD-Graph) |
-| MAMMOTH-ABMIL / MAMMOTH-TransMIL | Shao et al., [Mixture of mini experts: Overcoming the linear layer bottleneck in multiple instance learning](https://openreview.net/forum?id=S5Io33pc78), ICLR 2026 | [mahmoodlab/MAMMOTH](https://github.com/mahmoodlab/MAMMOTH) |
-| PAMoE | Wu et al., [Learning heterogeneous tissues with mixture of experts for gigapixel whole slide images](https://openaccess.thecvf.com/content/CVPR2025/html/Wu_Learning_Heterogeneous_Tissues_with_Mixture_of_Experts_for_Gigapixel_Whole_CVPR_2025_paper.html), CVPR 2025 | [wjx-error/PAMoE](https://github.com/wjx-error/PAMoE) |
-| OTSurv (used as a slide classifier) | Ren et al., [OTSurv: A novel multiple instance learning framework for survival prediction with heterogeneity-aware optimal transport](https://arxiv.org/abs/2506.20741), MICCAI 2025 | [Y-Research-SBU/OTSurv](https://github.com/Y-Research-SBU/OTSurv) |
+| ABMIL | [Ilse et al., ICML 2018](https://proceedings.mlr.press/v80/ilse18a.html) | [AMLab-Amsterdam/AttentionDeepMIL](https://github.com/AMLab-Amsterdam/AttentionDeepMIL) |
+| CLAM-SB / CLAM-MB | [Lu et al., Nat. Biomed. Eng. 2021](https://doi.org/10.1038/s41551-020-00682-w) | [mahmoodlab/CLAM](https://github.com/mahmoodlab/CLAM) |
+| DSMIL | [Li et al., CVPR 2021](https://arxiv.org/abs/2011.08939) | [binli123/dsmil-wsi](https://github.com/binli123/dsmil-wsi) |
+| DTFD-MIL | [Zhang et al., CVPR 2022](https://arxiv.org/abs/2203.12081) | [hrzhang1123/DTFD-MIL](https://github.com/hrzhang1123/DTFD-MIL) |
+| ACMIL | [Zhang et al., ECCV 2024](https://arxiv.org/abs/2311.07125) | [dazhangyu123/ACMIL](https://github.com/dazhangyu123/ACMIL) |
+| TransMIL | [Shao et al., NeurIPS 2021](https://arxiv.org/abs/2106.00908) | [szc19990412/TransMIL](https://github.com/szc19990412/TransMIL) |
+| ILRA | [Xiang et al., ICLR 2023](https://openreview.net/forum?id=01KmhBsEPFO) | [jinxixiang/low_rank_wsi](https://github.com/jinxixiang/low_rank_wsi) |
+| RRT-MIL | [Tang et al., CVPR 2024](https://arxiv.org/abs/2402.17228) | [DearCaat/RRT-MIL](https://github.com/DearCaat/RRT-MIL) |
+| MambaMIL | [Yang et al., MICCAI 2024](https://arxiv.org/abs/2403.06800) | [isyangshu/MambaMIL](https://github.com/isyangshu/MambaMIL) |
+| TAD-Graph | [Wang et al., IEEE TMI 2025](https://doi.org/10.1109/TMI.2025.3545680) | [HKU-MedAI/TAD-Graph](https://github.com/HKU-MedAI/TAD-Graph) |
+| MAMMOTH-ABMIL / -TransMIL | [Shao et al., ICLR 2026](https://openreview.net/forum?id=S5Io33pc78) | [mahmoodlab/MAMMOTH](https://github.com/mahmoodlab/MAMMOTH) |
+| PAMoE | [Wu et al., CVPR 2025](https://openaccess.thecvf.com/content/CVPR2025/html/Wu_Learning_Heterogeneous_Tissues_with_Mixture_of_Experts_for_Gigapixel_Whole_CVPR_2025_paper.html) | [wjx-error/PAMoE](https://github.com/wjx-error/PAMoE) |
+| OTSurv (as a slide classifier) | [Ren et al., MICCAI 2025](https://arxiv.org/abs/2506.20741) | [Y-Research-SBU/OTSurv](https://github.com/Y-Research-SBU/OTSurv) |

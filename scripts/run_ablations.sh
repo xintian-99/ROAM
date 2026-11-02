@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 # ROAM ablations (paper Table II): NSCLC, UNI2-h, CPTAC external test.
 # Each variant changes one setting of the full model.
 #

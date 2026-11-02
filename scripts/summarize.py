@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Summarise cross-validation runs: mean ± std (population std, ddof=0) over folds.
 
     python -m scripts.summarize --out outputs

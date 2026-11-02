@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Download the pre-extracted patch features used in the paper from Hugging Face.
 
 UNI2-h  -> MahmoodLab/UNI2-h-features (gated: accept the terms on the dataset page

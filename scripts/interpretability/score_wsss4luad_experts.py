@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Per-expert tissue AUROC of ROAM's routing on WSSS4LUAD (paper Sec. IV-B).
 
 ROAM is run on each ROI written by extract_wsss4luad_uni2h.py (full bag, no patch cap),

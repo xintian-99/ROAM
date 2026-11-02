@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Smoke tests: ROAM trains (forward + backward) and evaluates on random bags, and
 train.py / eval.py run end to end on a tiny synthetic dataset.
 

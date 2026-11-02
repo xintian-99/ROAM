@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Train ROAM on one cross-validation fold of a split file.
 
 Usage (ROAM, paper configuration, NSCLC fold 0 with CPTAC as external test):

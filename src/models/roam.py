@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """ROAM: Region-graph OptimAl-transport Mixture-of-experts for WSI classification.
 
 Pipeline (paper Sec. II):
@@ -123,6 +125,9 @@ def _knn_graph(C, k):
 class GATLayer(nn.Module):
     """GATv2 multi-head graph attention layer over a fixed kNN neighbourhood.
 
+    GATv2: Brody, Alon and Yahav, "How attentive are graph attention networks?",
+    ICLR 2022 (https://arxiv.org/abs/2105.14491). Written here in plain PyTorch.
+
         e_ij^h = a_h^T · LeakyReLU(W_q·h_i + W_k·h_j)
         α_ij^h = softmax_j(e_ij^h)                       (over the k neighbours)
         h'_i   = concat_h [ Σ_j α_ij^h · W_v^h · h_j ]
@@ -203,7 +208,11 @@ def _compute_rarity(Z, neighbors):
 
 
 def _sinkhorn_basic(C, mu, nu, eps=0.1, iters=20):
-    """Standard log-domain Sinkhorn (used only when the region graph is empty)."""
+    """Standard log-domain Sinkhorn (used only when the region graph is empty).
+
+    Cuturi, "Sinkhorn distances: Lightspeed computation of optimal transport",
+    NeurIPS 2013.
+    """
     logK = -C / eps
     lmu, lnu = torch.log(mu + 1e-8), torch.log(nu + 1e-8)
     u, v = torch.zeros_like(lmu), torch.zeros_like(lnu)
@@ -270,6 +279,11 @@ def _topk_dispatch(Pi, k=2):
 class ExpertAggregator(nn.Module):
     """Multi-head gated-attention pooling for one expert (paper Eq. 4).
 
+    The gated attention (V, U, W) is the form of Ilse, Tomczak and Welling,
+    "Attention-based deep multiple instance learning", ICML 2018, and of their code
+    https://github.com/AMLab-Amsterdam/AttentionDeepMIL. ROAM adds the multi-head
+    subspace pooling and the log(gamma) routing bias.
+
         score_h = W_h · (tanh(V h0) ⊙ sigmoid(U h0))
         beta_h  = softmax_m(score_h + log(gamma_e + 1e-8))
         o_e     = concat_h [ Σ_m beta_h(m) · h0_m[subspace h] ]
@@ -309,7 +323,8 @@ class ExpertAggregator(nn.Module):
 
 
 class ExpertFusion(nn.Module):
-    """Gated attention over the E expert outputs."""
+    """Gated attention over the E expert outputs (same form as Ilse et al., ICML 2018,
+    https://github.com/AMLab-Amsterdam/AttentionDeepMIL)."""
 
     def __init__(self, d, d_att=128):
         super().__init__()

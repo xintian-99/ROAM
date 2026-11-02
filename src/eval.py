@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Re-score a trained run: rebuild the model from config.json, load best_model.pt,
 and evaluate on the run's held-out fold and/or an external split.
 

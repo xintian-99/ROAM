@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Extract UNI2-h features for the WSSS4LUAD regions of interest (paper Sec. IV-B).
 
 Every image of the WSSS4LUAD validation split (<split>/img/*.png, pixel masks in
@@ -40,7 +42,12 @@ IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
 
 
 def load_uni2h(device):
-    """UNI2-h with the timm settings from the MahmoodLab/UNI2-h model card."""
+    """Load UNI2-h.
+
+    This loading code (timm arguments) is taken from the UNI2-h model card by the
+    Mahmood Lab: https://huggingface.co/MahmoodLab/UNI2-h. The ImageNet mean/std used
+    in embed() follow the same model card.
+    """
     import timm
     timm_kwargs = dict(img_size=224, patch_size=14, depth=24, num_heads=24, init_values=1e-5,
                        embed_dim=1536, mlp_ratio=2.66667 * 2, num_classes=0, no_embed_class=True,

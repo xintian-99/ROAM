@@ -1,3 +1,5 @@
+# ROAM: Region-Graph Optimal Transport Routing for Mixture-of-Experts WSI Classification
+# Xin Tian et al., IEEE BIBM 2026 | https://arxiv.org/abs/2604.07298 | https://github.com/xintian-99/ROAM
 """Export ROAM's per-patch routing for selected slides (paper Fig. 2).
 
 For every patch: coordinates, region index, dominant routed expert (argmax of the

@@ -1,0 +1,12 @@
+# Tested with Python 3.10, torch 2.7.1 (CUDA 11.8), numpy 2.1, pandas 2.3,
+# h5py 3.15, scikit-learn 1.7, huggingface_hub 1.15.
+torch>=2.1
+numpy
+pandas
+h5py
+scikit-learn
+huggingface_hub       # scripts/download_features.py
+pytest                # tests/
+
+# Optional, only for scripts/interpretability/extract_wsss4luad_uni2h.py
+# (UNI2-h feature extraction from image tiles): pip install "timm>=0.9.8"

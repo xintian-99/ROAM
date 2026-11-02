@@ -53,6 +53,8 @@
     color: var(--muted); font-weight: 600; font-size: 15px; cursor: default;
   }
   .btn small { font-weight: 400; font-size: 13px; }
+  a.btn { color: var(--accent); text-decoration: none; cursor: pointer; }
+  a.btn:hover { background: var(--accent-soft); }
   section { padding: 30px 0; border-top: 1px solid var(--line); }
   h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 26px; margin: 0 0 16px; }
   h3 { font-size: 19px; margin: 26px 0 8px; }
@@ -109,8 +111,8 @@
   </p>
   <p class="email">{xin.tian, julian.knight}@well.ox.ac.uk</p>
   <div class="buttons">
-    <span class="btn" aria-disabled="true">Paper <small>(coming soon)</small></span>
-    <span class="btn" aria-disabled="true">Code <small>(coming soon)</small></span>
+    <a class="btn" href="https://arxiv.org/abs/2604.07298">Paper <small>(arXiv)</small></a>
+    <a class="btn" href="https://github.com/xintian-99/ROAM">Code</a>
   </div>
 </header>
 
@@ -118,7 +120,7 @@
 
 <section class="abstract" id="abstract">
   <h2>Abstract</h2>
-  <p>Multiple Instance Learning (MIL) is the standard framework for gigapixel whole-slide image (WSI) classification in computational pathology. However, many MIL aggregators compress heterogeneous tissue regions through shared or globally parameterised pathways, limiting their ability to separate distinct diagnostic evidence within a slide. Mixture-of-Experts (MoE) models offer a natural way to specialise across heterogeneous regions, but conventional softmax routing can lead to imbalanced expert use and spatially fragmented assignments. We propose ROAM (Region-graph OptimAl-transport Mixture-of-experts), a spatially aware MoE-MIL aggregator that routes spatial region tokens to expert poolers through capacity-constrained entropic optimal transport. ROAM first compresses dense patch bags into local region tokens, so routing is performed over tissue neighbourhoods rather than isolated patches. It then uses Sinkhorn optimal transport with explicit expert-capacity marginals to assign region mass to experts, reducing reliance on a few dominant experts. Graph smoothing is applied during the Sinkhorn iterations to reduce fragmented assignments among neighbouring regions. The routed regions are aggregated by expert-specific gated-attention poolers and fused for slide-level prediction. Across four WSI benchmarks, 17 baselines, and two frozen pathology foundation-model encoders, ROAM ranks best or tied-best in 7 of 10 encoder&ndash;task settings. Interpretability analysis suggests that ROAM experts develop routing preferences for tumour, stroma, and normal tissue without tissue-level supervision. The code will be made available upon publication.</p>
+  <p>Multiple Instance Learning (MIL) is the standard framework for gigapixel whole-slide image (WSI) classification in computational pathology. However, many MIL aggregators compress heterogeneous tissue regions through shared or globally parameterised pathways, limiting their ability to separate distinct diagnostic evidence within a slide. Mixture-of-Experts (MoE) models offer a natural way to specialise across heterogeneous regions, but conventional softmax routing can lead to imbalanced expert use and spatially fragmented assignments. We propose ROAM (Region-graph OptimAl-transport Mixture-of-experts), a spatially aware MoE-MIL aggregator that routes spatial region tokens to expert poolers through capacity-constrained entropic optimal transport. ROAM first compresses dense patch bags into local region tokens, so routing is performed over tissue neighbourhoods rather than isolated patches. It then uses Sinkhorn optimal transport with explicit expert-capacity marginals to assign region mass to experts, reducing reliance on a few dominant experts. Graph smoothing is applied during the Sinkhorn iterations to reduce fragmented assignments among neighbouring regions. The routed regions are aggregated by expert-specific gated-attention poolers and fused for slide-level prediction. Across four WSI benchmarks, 17 baselines, and two frozen pathology foundation-model encoders, ROAM ranks best or tied-best in 7 of 10 encoder&ndash;task settings. Interpretability analysis suggests that ROAM experts develop routing preferences for tumour, stroma, and normal tissue without tissue-level supervision. The code is available at <a href="https://github.com/xintian-99/ROAM">https://github.com/xintian-99/ROAM</a>.</p>
 </section>
 
 <section id="method">
@@ -207,7 +209,7 @@
 </main>
 
 <footer class="wrap">
-  ROAM &middot; IEEE BIBM 2026. Paper and code links will be added upon publication.
+  ROAM &middot; IEEE BIBM 2026 &middot; <a href="https://arxiv.org/abs/2604.07298">arXiv:2604.07298</a> &middot; <a href="https://github.com/xintian-99/ROAM">code</a>
 </footer>
 
 </body>

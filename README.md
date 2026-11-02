@@ -292,6 +292,15 @@ GitHub's **Cite this repository** button uses the same entry (`CITATION.cff`).
 If you use the features or data, please also cite UNI2-h, Prov-GigaPath, CPathPatchFeature,
 TCGA, CPTAC and PANDA.
 
+## License
+
+A licence for the code will be added once all authors have agreed on it.
+
+`splits/uni2h_panda.csv` and `splits/gigapath_panda.csv` contain labels from the
+[PANDA challenge](https://panda.grand-challenge.org/data/), released under CC BY-NC-SA 4.0.
+These two files keep that licence. If you use them, please cite Bulten et al., *Nat. Med.* 2022
+([doi:10.1038/s41591-021-01620-2](https://doi.org/10.1038/s41591-021-01620-2)).
+
 ## Contact
 
 Xin Tian (xin.tian@well.ox.ac.uk), Centre for Human Genetics, University of Oxford.
